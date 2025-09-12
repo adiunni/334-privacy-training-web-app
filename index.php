@@ -1,4 +1,5 @@
 <?php
+session_start(); // <-- Add this line at the very top
 // Include the config file.
 require_once "config.php";
 
