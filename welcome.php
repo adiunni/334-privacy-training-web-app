@@ -36,7 +36,10 @@ echo "You are logged in as user: " . htmlspecialchars($_SESSION["display_usernam
         <h1>OnePhoto</h1>
     </div>
     <p>
-	<p><img src="A_Mystery_Location.jpg" alt="A Mystery Image" height="233" width="416"></p>
+        <!-- Revised: 09-11-2025 
+            Removed meta data from image and re-uploaded it with jpeg extension instead of jpg. 
+        -->
+	<p><img src="A_Mystery_Location.jpeg" alt="A Mystery Image" height="233" width="416"></p>
 	<p>A mystery location photo.</p>
 </body>
 </html>
