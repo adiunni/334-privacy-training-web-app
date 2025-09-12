@@ -48,7 +48,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
     // Revised: 09-11-2025
     // Create a PHP variable with a SQL Select statement.
-    $sql = "SELECT id, username, password FROM users_table where username = ?"
+    $sql = "SELECT id, username, password FROM users_table where username = ?";
 
     // Prepare the SQL statement for execution.
     if($stmt = mysqli_prepare($link, $sql)){
@@ -61,8 +61,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                 if(password_verify($pass, $hashed_password)){
                     // Password is correct, so start a new session.
                     session_regenerate_id(true); // Prevents session fixation attacks.
-                    session_start();
-                    
+
                     // Store data in session variables.
                     $_SESSION["loggedin"] = true;
                     $_SESSION["id"] = $id;
@@ -82,6 +81,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         mysqli_stmt_close($stmt);
         // End of revised code.
     }
+}
 ?>
 
 <!DOCTYPE html>
