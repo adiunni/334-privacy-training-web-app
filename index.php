@@ -6,6 +6,13 @@ require_once "config.php";
 $username = $password = $confirm_password = "";
 $username_err = $password_err = $confirm_password_err = "";
 
+/* Revised: 09-11-2025 */
+if(empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+// End of revised code.
+
+
 // Processing form data when form is submitted.
 // $_SERVER is an array containing information such as headers, paths, and script 
 // locations. The entries in this array are created by the web server.
@@ -15,6 +22,12 @@ $username_err = $password_err = $confirm_password_err = "";
 // called Superglobals (awesome name right?) and are predefined in PHP.
 // https://teamtreehouse.com/community/why-post-is-all-with-capital-letters
 if($_SERVER["REQUEST_METHOD"] == "POST"){
+    // Revised: 09-11-2025
+    // Validate CSRF token.
+    if(!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+    }
+    // End of revised code.
 
     // Check if username is available or already taken.
     // empty is a built-in function to determine whether a variable is empty.
@@ -129,7 +142,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             // Set parameters of the mysqli_stmt_bind_param $param_username and
             // $param_password to the $username and $password, respectively.
             $param_username = $username;
-            $param_password = $password;
+            $param_password = password_hash($password,PASSWORD_DEFAULT); // Creates a password hash
 
             // Attempt to execute the prepared statement with the built-in
             // mysqli_stmt_execute function.
@@ -177,11 +190,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         Various errors related to the user-entered strings (or omissions of those) are echoed to the
         output of the form for the user to see. -->
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+            <!-- Revised: 09-11-2025 -->
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">    
             <div class="form-group <?php echo (!empty($username_err)) ? 'has-error' : ''; ?>">
                 <label>Username</label>
-                <input type="text" name="username" class="form-control" value="<?php echo $username; ?>">
+                <input type="text" name="username" class="form-control" value="<?php echo htmlspecialchars($username); ?>">
                 <span class="help-block"><?php echo $username_err; ?></span>
             </div>
+            <!-- End of revised code. -->
             <div class="form-group <?php echo (!empty($password_err)) ? 'has-error' : ''; ?>">
                 <label>Password</label>
                 <input type="password" name="password" class="form-control" value="<?php echo $password; ?>">

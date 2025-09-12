@@ -12,8 +12,10 @@ if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
     header("location: login.php");
     exit;
 }
+// Revised: 09-11-2025
 // Echo the username.
-echo "You are logged in as user: " . $_SESSION["display_username"];
+echo "You are logged in as user: " . htmlspecialchars($_SESSION["display_username"]);
+// End of revised code.
 ?>
 
 <!DOCTYPE html>

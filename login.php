@@ -12,6 +12,11 @@ if(isset($_SESSION["loggedin"]) && $_SESSION["loggedin"] === true){
     header("location: welcome.php");
     exit;
 }
+/* Revised: 09-11-2025 */
+if(empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+// End of revised code.
 
 // Include config file.
 require_once "config.php";
@@ -29,45 +34,54 @@ $username_err = $password_err = "";
 // called Superglobals (awesome name right?) and are predefined in PHP.
 // https://teamtreehouse.com/community/why-post-is-all-with-capital-letters
 if($_SERVER["REQUEST_METHOD"] == "POST"){
+    // Revised: 09-11-2025
+    // Validate CSRF token.
+    if(!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+    }
+    // End of revised code.
 
     // Set variables to the values entered by the user and available to the script
     // for later insertion into the SQL statement below.
     $user = $_POST['username'];
     $pass = $_POST['password'];
 
+    // Revised: 09-11-2025
     // Create a PHP variable with a SQL Select statement.
-    $sql = "SELECT * FROM users_table WHERE username = '$user' and password = '$pass'";
+    $sql = "SELECT id, username, password FROM users_table where username = ?"
 
-    // The mysqli_query() function built into PHP performs a query against a database.
-    // https://www.w3schools.com/php/func_mysqli_query.asp
-	$res = mysqli_query($link, $sql);
-
-    // The built-in mysqli_stmt_num_rows function accepts a statement 
-    // object as a parameter and returns the number of rows in the 
-    // result set of the given statement.
-    // https://www.tutorialspoint.com/php/php_function_mysqli_stmt_num_rows.htm
-    // If the result of the executed SQL statement contains a row,
-    // we know that the username and password exists and we can log the user in.
-	if(mysqli_num_rows($res) == 0){
-        $password_err = "The username and/or password you entered was not valid.";
+    // Prepare the SQL statement for execution.
+    if($stmt = mysqli_prepare($link, $sql)){
+        mysqli_stmt_bind_param($stmt, "s", $user);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_store_result($stmt);
+        if(mysqli_stmt_num_rows($stmt) == 1){                    
+            mysqli_stmt_bind_result($stmt, $id, $username, $hashed_password);
+            if(mysqli_stmt_fetch($stmt)){
+                if(password_verify($pass, $hashed_password)){
+                    // Password is correct, so start a new session.
+                    session_regenerate_id(true); // Prevents session fixation attacks.
+                    session_start();
+                    
+                    // Store data in session variables.
+                    $_SESSION["loggedin"] = true;
+                    $_SESSION["id"] = $id;
+                    $_SESSION["username"] = $username;                            
+                    
+                    // Redirect user to welcome page.
+                    header("location: welcome.php");
+                } else{
+                    // Display an error message if password is not valid.
+                    $password_err = "The password you entered was not valid.";
+                }
+            }
+        } else{
+            // Display an error message if username doesn't exist.
+            $username_err = "No account found with that username.";
+        }
+        mysqli_stmt_close($stmt);
+        // End of revised code.
     }
-    else{
-        // Username and password is correct, so start a new session.
-    		session_start();
-
-    		// Store data in session variables.
-    		$_SESSION["loggedin"] = true;
-    		$_SESSION["id"] = $id;
-    		$_SESSION["username"] = $username;
-    		$_SESSION["display_username"] = $user;
-
-    		// Redirect user to welcome page.
-    		header("location: welcome.php");
-    }
-
-    // Close connection.
-    mysqli_close($link);
-}
 ?>
 
 <!DOCTYPE html>
@@ -95,11 +109,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         Various errors related to the user-entered strings (or omissions of those) are echoed to the
         output of the form for the user to see. -->
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+            <!-- Revised: 09-11-2025 -->
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
             <div class="form-group <?php echo (!empty($username_err)) ? 'has-error' : ''; ?>">
                 <label>Username</label>
-                <input type="text" name="username" class="form-control" value="<?php echo $username; ?>">
+                <input type="text" name="username" class="form-control" value="<?php echo htmlspecialchars($username); ?>">
                 <span class="help-block"><?php echo $username_err; ?></span>
             </div>
+            <!-- End of revised code. -->
             <div class="form-group <?php echo (!empty($password_err)) ? 'has-error' : ''; ?>">
                 <label>Password</label>
                 <input type="password" name="password" class="form-control">
