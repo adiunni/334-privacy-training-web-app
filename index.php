@@ -1,8 +1,6 @@
 <?php
-header('Strict-Transport-Security: max-age=31536000');
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'; img-src 'self' data:;");
-
 session_start(); // <-- Add this line at the very top
+header('Strict-Transport-Security: max-age=31536000');
 // Include the config file.
 require_once "config.php";
 
